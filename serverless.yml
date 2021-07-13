@@ -1,0 +1,188 @@
+# Welcome to Serverless!
+
+service: loadmanager
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+  region: eu-west-2
+
+# you can overwrite defaults here
+#  stage: dev
+#  region: us-east-1
+
+functions:
+  concurrencyManager:
+    handler: concurrencyManager.main
+    role: concurrencyManagerRole
+    events:
+      - schedule: rate(1 minute)
+  criticalPriorityQueueReader:
+    handler: queueReader.main
+    reservedConcurrency: 30
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - CriticalPriorityQueue
+              - Arn
+  highPriorityQueueReader:
+    handler: queueReader.main
+    reservedConcurrency: 30
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - HighPriorityQueue
+              - Arn
+  regularPriorityQueueReader:
+    handler: queueReader.main
+    reservedConcurrency: 30
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - RegularPriorityQueue
+              - Arn
+  receiveRequests:
+    handler: receiveRequests.main
+    role: forwardRequestFromLambdaToSQSRole
+    events:
+    - http: 
+        path: send_msg
+        method: post
+  putMetric:
+    handler: putMetric.main
+    timeout: 720
+    role: putMetricLambdaRole
+    events:
+      - schedule: rate(12 minutes)
+
+resources:
+  Resources:
+    CriticalPriorityQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "CriticalPriorityQueue"
+    HighPriorityQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "HighPriorityQueue"
+    RegularPriorityQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "RegularPriorityQueue"
+    forwardRequestFromLambdaToSQSRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /ics/forwardRequestFromLambdaToSQSRole/
+        RoleName: ForwardRequestFromLambdaToSQSRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: forwardRequestFromLambdaToSQSPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - sqs:SendMessage
+                    - sqs:ListQueues
+                  Resource: "*"
+    putMetricLambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /ics/putMetricLambdaRole/
+        RoleName: PutMetricLambdaRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: putMetricLambdaPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - cloudwatch:PutMetricData
+                  Resource: "*"
+    concurrencyManagerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /ics/concurrencyManagerRole/
+        RoleName: ConcurrencyManagerRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: concurrencyManagerPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - cloudwatch:GetMetricData
+                    - lambda:PutFunctionConcurrency
+                    - lambda:ListFunctions
+                  Resource: "*"      
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"
