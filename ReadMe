@@ -10,4 +10,4 @@ In another part of the application a lambda, called putMetric, triggered every 1
 
 A lambda, called concurrencyManager, reads the value of this custom CloudWatch metric and throttles each of the lambdas associated with the three queues. This throttling is shown on the graph titled Throttles, which shows how the three lambdas that read from the queues are throttled. The criticalPriorityQueueReader is not throttled, whereas the highPriorityQueueReader is throttled less than the regularPriorityQueueReader.
 
-![Load Manager Architecture Diagram](https://github.com/fh17488/LoadManager/blob/master/Load_Manager.jpg?raw=true)
+![Diagram](Load_Manager.jpg)
