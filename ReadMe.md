@@ -6,7 +6,7 @@ The value of the key, priority, can be: Critical, High or Regular, indicating th
 
 Each of these queues in turn is connected to a lambda, called criticalPriorityQueueReader, highPriorityQueueReader and regularPriorityQueueReader respectively to read messages from the associated queue and forward it to a downstream consumer.
 
-In another part of the application a lambda, called putMetric, triggered every 12 minutes by CloudWatch generates a value for a custom CloudWatch metric that represents a simulated value of the load of the backend mainframe. This load varies in an arbitrary range of 0 to 650.
+In another part of the application a lambda, called putMetric, triggered every 12 minutes by CloudWatch generates a value for a custom CloudWatch metric that represents a simulated value of the load of the downstream consumer. This load varies in an arbitrary range of 0 to 650.
 
 A lambda, called concurrencyManager, reads the value of this custom CloudWatch metric and throttles each of the lambdas associated with the three queues. This throttling is shown on the graph titled Throttles, which shows how the three lambdas that read from the queues are throttled. The criticalPriorityQueueReader is not throttled, whereas the highPriorityQueueReader is throttled less than the regularPriorityQueueReader.
 
