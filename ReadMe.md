@@ -1,4 +1,4 @@
-I have created a load manager application using the serverless framework. The Inbound Queues component is implemented as an API Gateway endpoint connected to a lambda called receiveRequests. Messages sent to this endpoint contain the following contents:
+I have created a load manager application using the serverless framework. Inbound messages are received by an API Gateway endpoint connected to a lambda called receiveRequests. Messages sent to this endpoint contain the following contents:
 
 {"message":"hello faraz!", "priority": "Critical"}
 
