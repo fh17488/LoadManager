@@ -1,4 +1,6 @@
-I have created a load manager application using the serverless framework. Inbound messages are received by an API Gateway endpoint connected to a lambda called receiveRequests. Messages sent to this endpoint contain the following contents:
+Built a POC for an API Load Manager using Serverless. Messages sent to the API may have critical, high or regular priority. Depending on the load on the back-end server inbound messages are throttled using different criteria. Critical messages are never throttled and regular messages are throttled more than high priority messages. Thus, the Load Manager throttles messages depending on the load on the back-end system. As part of the POC load on the backend system was simulated in a continuous cyclical fashion.
+
+Inbound messages are received by an API Gateway endpoint connected to a lambda called receiveRequests. Messages sent to this endpoint contain the following contents:
 
 {"message":"hello faraz!", "priority": "Critical"}
 
